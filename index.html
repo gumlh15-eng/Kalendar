@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Производственный календарь 2025–2027</title>
+<style>
+:root{
+  --bg:#f2f4f7; --card:#ffffff; --text:#15181c; --muted:#6b7280; --line:#e2e6eb;
+  --hol:#d93a3f; --hol-bg:rgba(217,58,63,.13);
+  --weekend:#d98207; --weekend-bg:rgba(217,130,7,.14);
+  --off:#0f9b8e; --off-bg:rgba(15,155,142,.14);
+  --wsat:#2f9e44; --wsat-bg:rgba(47,158,68,.14);
+  --accent:#2563eb; --accent-soft:rgba(37,99,235,.20);
+  --shadow:0 8px 28px rgba(15,23,42,.16);
+}
+[data-theme="dark"]{
+  --bg:#101418; --card:#191e24; --text:#e7ebf0; --muted:#8e99a6; --line:#2a323b;
+  --hol:#ff6b6b; --hol-bg:rgba(255,107,107,.16);
+  --weekend:#ffb020; --weekend-bg:rgba(255,176,32,.15);
+  --off:#2ec4b6; --off-bg:rgba(46,196,182,.15);
+  --wsat:#51cf66; --wsat-bg:rgba(81,207,102,.15);
+  --accent:#5b9bff; --accent-soft:rgba(91,155,255,.24);
+  --shadow:0 8px 28px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  -webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent;
+}
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:8px;
+  padding:8px 10px;background:var(--bg);border-bottom:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.spacer{flex:1}
+.seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{
+  border:0;background:transparent;color:var(--text);font:600 15px/1 inherit;
+  min-width:64px;height:44px;padding:0 12px;cursor:pointer;transition:background .15s,color .15s;
+}
+.seg button.on{background:var(--accent);color:#fff}
+.seg button:not(.on):active{background:var(--accent-soft)}
+.ico{
+  width:44px;height:44px;min-width:44px;border:1px solid var(--line);background:var(--card);
+  color:var(--text);border-radius:12px;font-size:18px;line-height:1;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.ico:active{background:var(--accent-soft)}
+/* ---------- legend ---------- */
+.legend{
+  display:flex;flex-wrap:wrap;gap:12px;padding:8px 14px 0;max-width:1500px;margin:0 auto;
+  font-size:11px;color:var(--muted);
+}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;border:1px solid transparent}
+.sw.t-hol{background:var(--hol-bg);border-color:var(--hol)}
+.sw.t-weekend{background:var(--weekend-bg);border-color:var(--weekend)}
+.sw.t-off{background:var(--off-bg);border-color:var(--off)}
+.sw.t-wsat{background:var(--wsat-bg);border-color:var(--wsat)}
+.sw.short{border:1.5px dashed var(--muted)}
+/* ---------- calendar ---------- */
+#calendar{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:14px;padding:14px;max-width:1500px;margin:0 auto;
+}
+.month{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 10px 12px}
+.mtitle{margin:0 0 8px;font-size:13px;font-weight:700;text-align:center;letter-spacing:.02em;color:var(--text)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.dow{font-size:10px;font-weight:700;text-align:center;color:var(--muted);padding:2px 0 4px;text-transform:capitalize}
+.day{
+  position:relative;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
+  font-size:13px;border-radius:7px;border:1px solid transparent;
+  cursor:pointer;user-select:none;-webkit-user-select:none;
+}
+.day.blank{cursor:default;pointer-events:none;border-color:transparent;background:none}
+.t-work{color:var(--text)}
+.t-hol{background:var(--hol-bg);color:var(--hol);font-weight:700}
+.t-weekend{background:var(--weekend-bg);color:var(--weekend)}
+.t-off{background:var(--off-bg);color:var(--off)}
+.t-wsat{background:var(--wsat-bg);color:var(--wsat);font-weight:700}
+.day.short{border:1.5px dashed currentColor}
+.day.today{box-shadow:0 0 0 2px var(--accent)}
+.day.in-range::after{
+  content:'';position:absolute;inset:0;background:var(--accent);
+  opacity:.20;border-radius:inherit;pointer-events:none;
+}
+.day.sel-start,.day.sel-end{outline:2px solid var(--accent);outline-offset:-2px;z-index:2}
+/* ---------- floating panel ---------- */
+#panel{
+  position:fixed;z-index:100;width:292px;max-width:calc(100vw - 12px);
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  box-shadow:var(--shadow);font-size:13px;overflow:hidden;
+  left:0;top:0;
+}
+.ph{
+  display:flex;align-items:center;gap:4px;height:44px;padding:0 2px 0 12px;
+  border-bottom:1px solid var(--line);cursor:grab;touch-action:none;
+  user-select:none;-webkit-user-select:none;background:var(--card);
+}
+.ph.dragging{cursor:grabbing}
+.ph .ttl{flex:1;font-weight:700;font-size:13px;color:var(--text)}
+.ph button{
+  width:44px;height:44px;border:0;background:transparent;color:var(--muted);
+  font-size:18px;line-height:1;border-radius:10px;cursor:pointer;
+}
+.ph button:active{background:var(--accent-soft)}
+.pb{padding:8px 10px 10px}
+.row{display:flex;gap:6px;margin-bottom:7px}
+.row label{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--muted)}
+.row input.fld{
+  height:44px;width:100%;min-width:0;padding:0 8px;font:400 14px inherit;color:var(--text);
+  background:var(--bg);border:1px solid var(--line);border-radius:10px;
+}
+.row input.fld:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.row input.fld.bad{border-color:var(--hol);color:var(--hol)}
+.row.chk{gap:4px}
+.row.chk label{
+  flex-direction:row;align-items:center;gap:6px;min-height:34px;
+  font-size:12px;color:var(--text);cursor:pointer;
+}
+.row.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
+.msg{font-size:11px;color:var(--hol);min-height:0;margin:-3px 0 5px;line-height:1.25}
+.msg:empty{display:none}
+.reset{
+  width:100%;height:44px;border:1px solid var(--line);border-radius:10px;
+  background:var(--bg);color:var(--text);font:600 13px inherit;cursor:pointer;
+}
+.reset:active{background:var(--accent-soft)}
+/* ---------- fab ---------- */
+#fab{
+  position:fixed;right:16px;bottom:16px;z-index:101;
+  width:56px;height:56px;border-radius:50%;border:1px solid var(--line);
+  background:var(--card);color:var(--text);font-size:24px;line-height:1;
+  box-shadow:var(--shadow);cursor:pointer;display:none;
+  align-items:center;justify-content:center;
+}
+#fab.on{display:flex}
+/* ---------- tooltip ---------- */
+#tip{
+  position:fixed;z-index:1000;display:none;max-width:270px;
+  padding:8px 10px;border-radius:9px;background:rgba(18,22,28,.96);color:#fff;
+  font-size:12px;line-height:1.35;pointer-events:none;
+  transform:translate(-50%,-100%);
+}
+/* ---------- modal ---------- */
+#modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.45);display:none;padding:12px}
+#modal.on{display:flex;align-items:flex-start;justify-content:center}
+.mcard{
+  background:var(--card);border-radius:14px;box-shadow:var(--shadow);
+  width:100%;max-width:720px;max-height:calc(100dvh - 24px);
+  display:flex;flex-direction:column;margin:auto;
+}
+.mhead{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:6px 6px 6px 16px;border-bottom:1px solid var(--line);flex:0 0 auto;
+}
+.mhead b{font-size:15px}
+.mhead button{
+  width:44px;height:44px;border:0;background:transparent;color:var(--muted);
+  font-size:18px;border-radius:10px;cursor:pointer;
+}
+.mbody{padding:12px 16px 20px;overflow:auto;font-size:13px;line-height:1.5}
+.mbody h4{margin:14px 0 6px;font-size:14px;color:var(--accent)}
+.mbody h4:first-child{margin-top:0}
+.mbody p{margin:0 0 5px}
+.mbody .k{color:var(--muted)}
+.mbody .tot{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-weight:600}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="seg" id="yearSeg">
+    <button type="button" data-year="2025">2025</button>
+    <button type="button" data-year="2026">2026</button>
+    <button type="button" data-year="2027">2027</button>
+  </div>
+  <div class="spacer"></div>
+  <button type="button" class="ico" id="themeBtn" aria-label="Переключить тему">🌙</button>
+  <button type="button" class="ico" id="infoBtn" aria-label="Информация">ℹ️</button>
+</header>
+
+<div class="legend">
+  <span><i class="sw t-hol"></i>праздник</span>
+  <span><i class="sw t-weekend"></i>выходной</span>
+  <span><i class="sw t-off"></i>перенос</span>
+  <span><i class="sw t-wsat"></i>раб. суббота</span>
+  <span><i class="sw short"></i>сокращённый</span>
+</div>
+
+<main id="calendar"></main>
+
+<div id="panel">
+  <div class="ph" id="dragHandle">
+    <span class="ttl">Период</span>
+    <button type="button" id="collapseBtn" aria-label="Свернуть панель">—</button>
+  </div>
+  <div class="pb">
+    <div class="row">
+      <label>Начало<input class="fld" id="startIn" inputmode="numeric" placeholder="дд.мм.гггг" autocomplete="off"></label>
+      <label>Конец<input class="fld" id="endIn" inputmode="numeric" placeholder="дд.мм.гггг" autocomplete="off"></label>
+    </div>
+    <div class="row chk">
+      <label><input type="checkbox" id="incStart" checked><span>вкл. начало</span></label>
+      <label><input type="checkbox" id="incEnd" checked><span>вкл. конец</span></label>
+    </div>
+    <div class="row">
+      <label>Кален. дней<input class="fld" id="calIn" inputmode="numeric" autocomplete="off"></label>
+      <label>Рабочих дней<input class="fld" id="workIn" inputmode="numeric" autocomplete="off"></label>
+    </div>
+    <div class="msg" id="msg"></div>
+    <button type="button" class="reset" id="resetBtn">⟲ Сбросить</button>
+  </div>
+</div>
+
+<button type="button" id="fab" aria-label="Открыть панель расчёта">🧮</button>
+
+<div id="tip"></div>
+
+<div id="modal">
+  <div class="mcard">
+    <div class="mhead"><b>Производственный календарь</b><button type="button" id="closeModal" aria-label="Закрыть">✕</button></div>
+    <div class="mbody" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   1. Утилиты дат (только локальные Date, без ISO/parse)
+   ========================================================= */
+var pad   = function(n){ return String(n).padStart(2,'0'); };
+var clone = function(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+var keyOf = function(d){ return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); };
+var parseKey = function(k){ var p=k.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); };
+var fmt = function(d){ return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear(); };
+
+var MIN = new Date(2025,0,1);
+var MAX = new Date(2027,11,31);
+var DAY = 86400000;
+
+function parseStr(s){
+  var m = String(s).trim().match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{4})$/);
+  if(!m) return null;
+  var d=+m[1], mo=+m[2], y=+m[3];
+  if(mo<1||mo>12||d<1||d>31) return null;
+  var dt = new Date(y, mo-1, d);
+  if(dt.getFullYear()!==y || dt.getMonth()!==mo-1 || dt.getDate()!==d) return null;
+  return dt;
+}
+
+/* =========================================================
+   2. Данные производственного календаря
+   ========================================================= */
+var JAN = [1,2,3,4,5,6,7,8].map(function(d){ return [1,d]; });
+var BASE_HOL = [[2,23],[3,8],[5,1],[5,9],[6,12],[11,4]];
+
+var RAW = {
+  2025: {
+    hol:   JAN.concat(BASE_HOL),
+    off:   [[5,2],[5,8],[6,13],[11,3],[12,31]],
+    wsat:  [[11,1]],
+    short: [[4,30],[6,11],[11,1],[12,30]]
+  },
+  2026: {
+    hol:   JAN.concat(BASE_HOL),
+    off:   [[1,9],[3,9],[5,11],[12,31]],
+    wsat:  [],
+    short: [[4,30],[5,8],[6,11],[11,3]]
+  },
+  2027: {
+    hol:   JAN.concat(BASE_HOL),
+    off:   [[2,22],[5,3],[5,10],[6,14],[11,5],[12,31]],
+    wsat:  [[2,20]],
+    short: [[2,20],[4,30],[6,11],[11,3]]
+  }
+};
+
+var TYPES = new Map();   // 'y-m-d' -> {type, short}
+(function buildTypes(){
+  Object.keys(RAW).forEach(function(y){
+    var r = RAW[y];
+    r.hol.forEach(function(md){  TYPES.set(y+'-'+md[0]+'-'+md[1], {type:'hol',    short:false}); });
+    r.off.forEach(function(md){  TYPES.set(y+'-'+md[0]+'-'+md[1], {type:'off',    short:false}); });
+    r.wsat.forEach(function(md){ TYPES.set(y+'-'+md[0]+'-'+md[1], {type:'wsat',   short:false}); });
+    r.short.forEach(function(md){
+      var k = y+'-'+md[0]+'-'+md[1];
+      var ex = TYPES.get(k);
+      if(ex){ ex.short = true; } else { TYPES.set(k, {type:'work', short:true}); }
+    });
+  });
+})();
+
+function dayInfo(d){
+  var o = TYPES.get(keyOf(d));
+  if(o) return o;
+  var w = d.getDay();
+  return { type: (w===0||w===6) ? 'weekend' : 'work', short:false };
+}
+function isWorking(t){ return t.type==='work' || t.type==='short' || t.type==='wsat'; }
+
+function holName(m,d){
+  if(m===1)  return d===7 ? 'Рождество Христово' : 'Новогодние каникулы';
+  if(m===2 && d===23) return 'День защитника Отечества';
+  if(m===3 && d===8)  return 'Международный женский день';
+  if(m===5 && d===1)  return 'Праздник Весны и Труда';
+  if(m===5 && d===9)  return 'День Победы';
+  if(m===6 && d===12) return 'День России';
+  if(m===11 && d===4) return 'День народного единства';
+  return 'Праздничный день';
+}
+
+function tipText(d, t){
+  var s;
+  if(t.type==='hol')          s = 'Нерабочий праздничный день. ' + holName(d.getMonth()+1, d.getDate());
+  else if(t.type==='off')     s = 'Нерабочий день — перенос / дополнительный день отдыха';
+  else if(t.type==='weekend') s = 'Выходной день';
+  else if(t.type==='wsat')    s = 'Рабочая суббота';
+  else                        s = 'Рабочий день';
+  if(t.short) s += '. Сокращённый день (−1 час)';
+  return s;
+}
+
+/* =========================================================
+   3. Расчёты периода
+   ========================================================= */
+var period = { start:null, end:null, incStart:true, incEnd:true };
+var activeField = 'cal';   // 'cal' | 'work'
+
+function calendarDays(s,e,a,b){
+  if(!s || !e) return 0;
+  var diff = Math.round((e.getTime() - s.getTime())/DAY);
+  return Math.max(0, diff + (a?1:0) + (b?1:0) - 1);
+}
+
+function workingDays(s,e,a,b){
+  if(!s || !e) return 0;
+  var n=0, guard=0;
+  var cur = clone(s);
+  while(cur.getTime() <= e.getTime() && guard++ < 5000){
+    var isFirst = cur.getTime()===s.getTime();
+    var isLast  = cur.getTime()===e.getTime();
+    if(!(isFirst && !a) && !(isLast && !b)){
+      if(isWorking(dayInfo(cur))) n++;
+    }
+    cur.setDate(cur.getDate()+1);
+  }
+  return n;
+}
+
+function clampDate(d){
+  if(d.getTime() < MIN.getTime()) return clone(MIN);
+  if(d.getTime() > MAX.getTime()) return clone(MAX);
+  return d;
+}
+
+function endFromCal(s, N){
+  var e = clone(s);
+  e.setDate(e.getDate() + (N - (period.incStart?1:0) - (period.incEnd?1:0) + 1));
+  return clampDate(e);
+}
+
+function endFromWork(s, N){
+  var cur = clone(s);
+  if(!period.incStart) cur.setDate(cur.getDate()+1);
+  var counted = 0, last = null, guard = 0;
+  while(counted < N && guard++ < 5000){
+    if(cur.getTime() > MAX.getTime()) break;
+    if(isWorking(dayInfo(cur))){ counted++; last = clone(cur); }
+    cur.setDate(cur.getDate()+1);
+  }
+  return last ? clampDate(last) : clampDate(cur);
+}
+
+/* =========================================================
+   4. DOM
+   ========================================================= */
+var calEl      = document.getElementById('calendar');
+var yearSeg    = document.getElementById('yearSeg');
+var themeBtn   = document.getElementById('themeBtn');
+var infoBtn    = document.getElementById('infoBtn');
+var panel      = document.getElementById('panel');
+var dragHandle = document.getElementById('dragHandle');
+var collapseBtn= document.getElementById('collapseBtn');
+var fab        = document.getElementById('fab');
+var startIn    = document.getElementById('startIn');
+var endIn      = document.getElementById('endIn');
+var incStartEl = document.getElementById('incStart');
+var incEndEl   = document.getElementById('incEnd');
+var calIn      = document.getElementById('calIn');
+var workIn     = document.getElementById('workIn');
+var msgEl      = document.getElementById('msg');
+var resetBtn   = document.getElementById('resetBtn');
+var tipEl      = document.getElementById('tip');
+var modal      = document.getElementById('modal');
+var modalBody  = document.getElementById('modalBody');
+var closeModal = document.getElementById('closeModal');
+
+var MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь',
+              'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+var DOW = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+var LS = {
+  get: function(k,def){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } },
+  set: function(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+
+var currentYear = LS.get('pc_year', 2025);
+if([2025,2026,2027].indexOf(currentYear) === -1) currentYear = 2025;
+var theme = LS.get('pc_theme', null);
+var collapsed = false;
+
+/* =========================================================
+   5. Отрисовка календаря
+   ========================================================= */
+function render(){
+  var todayKey = keyOf(new Date());
+  calEl.innerHTML = '';
+
+  for(var m=0; m<12; m++){
+    var card = document.createElement('section');
+    card.className = 'month';
+
+    var h = document.createElement('h2');
+    h.className = 'mtitle';
+    h.textContent = MONTHS[m] + ' ' + currentYear;
+    card.appendChild(h);
+
+    var g = document.createElement('div');
+    g.className = 'grid';
+
+    DOW.forEach(function(w){
+      var c = document.createElement('div');
+      c.className = 'dow';
+      c.textContent = w;
+      g.appendChild(c);
+    });
+
+    var first = new Date(currentYear, m, 1);
+    var offset = (first.getDay() + 6) % 7;
+    for(var i=0;i<offset;i++){
+      var b = document.createElement('div');
+      b.className = 'day blank';
+      g.appendChild(b);
+    }
+
+    var dim = new Date(currentYear, m+1, 0).getDate();
+    for(var d=1; d<=dim; d++){
+      var dt  = new Date(currentYear, m, d);
+      var inf = dayInfo(dt);
+      var k   = keyOf(dt);
+
+      var c = document.createElement('div');
+      c.className = 'day t-' + inf.type + (inf.short ? ' short' : '') + (k===todayKey ? ' today' : '');
+      c.dataset.date = k;
+      c.textContent = d;
+      c.title = tipText(dt, inf);
+      c.setAttribute('aria-label', fmt(dt) + ' — ' + tipText(dt, inf));
+      g.appendChild(c);
+    }
+
+    card.appendChild(g);
+    calEl.appendChild(card);
+  }
+
+  applySelection();
+}
+
+function applySelection(){
+  var cells = calEl.querySelectorAll('.day[data-date]');
+  var s = period.start, e = period.end;
+  var sv = s ? s.getTime() : null;
+  var ev = e ? e.getTime() : null;
+
+  for(var i=0;i<cells.length;i++){
+    var c = cells[i];
+    c.classList.remove('in-range','sel-start','sel-end');
+    if(sv === null) continue;
+    var dv = parseKey(c.dataset.date).getTime();
+    if(ev !== null){
+      if(dv >= sv && dv <= ev) c.classList.add('in-range');
+      if(dv === sv) c.classList.add('sel-start');
+      if(dv === ev) c.classList.add('sel-end');
+    }else if(dv === sv){
+      c.classList.add('sel-start');
+    }
+  }
+}
+
+/* =========================================================
+   6. Синхронизация полей
+   ========================================================= */
+function setMsg(t){ msgEl.textContent = t || ''; }
+function setBad(el, bad){ el.classList.toggle('bad', !!bad); }
+
+function refresh(){
+  startIn.value = period.start ? fmt(period.start) : '';
+  endIn.value   = period.end   ? fmt(period.end)   : '';
+  incStartEl.checked = period.incStart;
+  incEndEl.checked   = period.incEnd;
+
+  if(period.start && period.end){
+    var c = calendarDays(period.start, period.end, period.incStart, period.incEnd);
+    var w = workingDays(period.start, period.end, period.incStart, period.incEnd);
+    if(document.activeElement !== calIn)  calIn.value  = c;
+    if(document.activeElement !== workIn) workIn.value = w;
+  }else{
+    if(document.activeElement !== calIn)  calIn.value  = '';
+    if(document.activeElement !== workIn) workIn.value = '';
+  }
+
+  applySelection();
+  persistPeriod();
+}
+
+function persistPeriod(){
+  LS.set('pc_period', {
+    s: period.start ? fmt(period.start) : null,
+    e: period.end   ? fmt(period.end)   : null,
+    a: period.incStart,
+    b: period.incEnd
+  });
+}
+
+function deriveEnd(){
+  if(!period.start) return;
+  if(activeField === 'work'){
+    var nw = parseInt(workIn.value, 10);
+    if(!(nw >= 1)) return;
+    period.end = endFromWork(period.start, nw);
+  }else{
+    var nc = parseInt(calIn.value, 10);
+    if(!(nc >= 1)) return;
+    period.end = endFromCal(period.start, nc);
+  }
+}
+
+/* =========================================================
+   7. Обработчики полей
+   ========================================================= */
+startIn.addEventListener('input', function(){
+  setBad(startIn, false); setMsg('');
+  var d = parseStr(startIn.value);
+  if(!d) return;
+  if(d.getTime() < MIN.getTime() || d.getTime() > MAX.getTime()){
+    setBad(startIn, true); setMsg('Дата вне диапазона 01.01.2025–31.12.2027'); return;
+  }
+  period.start = clone(d);
+
+  if(period.end && period.end.getTime() < period.start.getTime()){
+    var t = period.start; period.start = period.end; period.end = t;
+  }
+  if(period.end) deriveEnd();
+  refresh();
+});
+
+endIn.addEventListener('input', function(){
+  setBad(endIn, false); setMsg('');
+  var d = parseStr(endIn.value);
+  if(!d) return;
+  if(d.getTime() < MIN.getTime() || d.getTime() > MAX.getTime()){
+    setBad(endIn, true); setMsg('Дата вне диапазона 01.01.2025–31.12.2027'); return;
+  }
+  if(!period.start){ period.end = clone(d); refresh(); return; }
+
+  var s = period.start, e = clone(d);
+  if(e.getTime() < s.getTime()){ var t = s; s = e; e = t; }
+  period.start = s;
+  period.end   = e;
+  refresh();
+});
+
+calIn.addEventListener('input', function(){
+  activeField = 'cal';
+  calIn.value = calIn.value.replace(/[^\d]/g,'');
+  setMsg('');
+  if(calIn.value === '') return;
+  var n = parseInt(calIn.value, 10);
+  if(!(n >= 1)) return;
+  if(!period.start){ setMsg('Сначала укажите дату начала'); return; }
+  period.end = endFromCal(period.start, n);
+  refresh();
+});
+
+workIn.addEventListener('input', function(){
+  activeField = 'work';
+  workIn.value = workIn.value.replace(/[^\d]/g,'');
+  setMsg('');
+  if(workIn.value === '') return;
+  var n = parseInt(workIn.value, 10);
+  if(!(n >= 1)) return;
+  if(!period.start){ setMsg('Сначала укажите дату начала'); return; }
+  period.end = endFromWork(period.start, n);
+  refresh();
+});
+
+incStartEl.addEventListener('change', function(){
+  period.incStart = incStartEl.checked;
+  refresh();
+});
+incEndEl.addEventListener('change', function(){
+  period.incEnd = incEndEl.checked;
+  refresh();
+});
+
+resetBtn.addEventListener('click', function(){
+  period = { start:null, end:null, incStart:true, incEnd:true };
+  activeField = 'cal';
+  setBad(startIn,false); setBad(endIn,false); setMsg('');
+  startIn.value=''; endIn.value=''; calIn.value=''; workIn.value='';
+  refresh();
+});
+
+/* =========================================================
+   8. Тап по календарю
+   ========================================================= */
+calEl.addEventListener('click', function(e){
+  var cell = e.target.closest ? e.target.closest('.day[data-date]') : null;
+  if(!cell) return;
+  hideTip();
+
+  var d = parseKey(cell.dataset.date);
+
+  if(!period.start || period.end){
+    period.start = clone(d);
+    period.end   = null;
+  }else{
+    if(d.getTime() < period.start.getTime()){
+      period.end   = period.start;
+      period.start = clone(d);
+    }else{
+      period.end = clone(d);
+    }
+  }
+  setBad(startIn,false); setBad(endIn,false); setMsg('');
+  refresh();
+});
+
+/* =========================================================
+   9. Подсказки (hover на ПК / долгое нажатие на мобильном)
+   ========================================================= */
+var tipTimer = null, lpTimer = null;
+
+function showTip(cell){
+  var d = parseKey(cell.dataset.date);
+  var t = dayInfo(d);
+  tipEl.textContent = fmt(d) + ' — ' + tipText(d, t);
+  tipEl.style.display = 'block';
+
+  var r = cell.getBoundingClientRect();
+  var x = Math.min(window.innerWidth - 12, Math.max(12, r.left + r.width/2));
+  var y = r.top - 6;
+  tipEl.style.left = x + 'px';
+  tipEl.style.top  = Math.max(40, y) + 'px';
+
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(hideTip, 2800);
+}
+function hideTip(){ tipEl.style.display = 'none'; clearTimeout(tipTimer); }
+
+calEl.addEventListener('pointerdown', function(e){
+  var cell = e.target.closest ? e.target.closest('.day[data-date]') : null;
+  if(!cell) return;
+  clearTimeout(lpTimer);
+  lpTimer = setTimeout(function(){ showTip(cell); }, 450);
+});
+['pointerup','pointercancel','pointermove','pointerleave'].forEach(function(ev){
+  calEl.addEventListener(ev, function(){ clearTimeout(lpTimer); });
+});
+window.addEventListener('scroll', hideTip, {passive:true});
+
+/* =========================================================
+   10. Перетаскивание и сворачивание панели
+   ========================================================= */
+var dragging = false, dragOff = {x:0,y:0};
+
+function savePos(){
+  LS.set('pc_pos', {
+    left: parseFloat(panel.style.left) || 0,
+    top:  parseFloat(panel.style.top)  || 0
+  });
+}
+
+dragHandle.addEventListener('pointerdown', function(e){
+  if(e.target.closest && e.target.closest('button')) return;
+  if(e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
+  e.preventDefault();
+  var r = panel.getBoundingClientRect();
+  dragOff.x = e.clientX - r.left;
+  dragOff.y = e.clientY - r.top;
+  dragging = true;
+  dragHandle.classList.add('dragging');
+  try{ dragHandle.setPointerCapture(e.pointerId); }catch(err){}
+});
+
+dragHandle.addEventListener('pointermove', function(e){
+  if(!dragging) return;
+  var w = panel.offsetWidth, h = panel.offsetHeight;
+  var x = e.clientX - dragOff.x;
+  var y = e.clientY - dragOff.y;
+  x = Math.max(0, Math.min(window.innerWidth  - w, x));
+  y = Math.max(0, Math.min(window.innerHeight - h, y));
+  panel.style.left = x + 'px';
+  panel.style.top  = y + 'px';
+});
+
+function endDrag(e){
+  if(!dragging) return;
+  dragging = false;
+  dragHandle.classList.remove('dragging');
+  try{ dragHandle.releasePointerCapture(e.pointerId); }catch(err){}
+  savePos();
+}
+dragHandle.addEventListener('pointerup', endDrag);
+dragHandle.addEventListener('pointercancel', endDrag);
+
+function setCollapsed(v){
+  collapsed = !!v;
+  panel.style.display = collapsed ? 'none' : '';
+  fab.classList.toggle('on', collapsed);
+  LS.set('pc_collapsed', collapsed);
+}
+
+collapseBtn.addEventListener('click', function(){ setCollapsed(true); });
+fab.addEventListener('click', function(){ setCollapsed(false); });
+
+function placePanel(){
+  var w = panel.offsetWidth || 292;
+  var h = panel.offsetHeight || 260;
+  var x = Math.max(8, window.innerWidth - w - 16);
+  var y = 76;
+  panel.style.left = x + 'px';
+  panel.style.top  = y + 'px';
+}
+
+function restorePanel(){
+  var p = LS.get('pc_pos', null);
+  var w = panel.offsetWidth || 292;
+  var h = panel.offsetHeight || 260;
+  if(p && typeof p.left === 'number' && typeof p.top === 'number'){
+    var x = Math.max(0, Math.min(window.innerWidth  - w, p.left));
+    var y = Math.max(0, Math.min(window.innerHeight - h, p.top));
+    panel.style.left = x + 'px';
+    panel.style.top  = y + 'px';
+  }else{
+    placePanel();
+  }
+}
+
+window.addEventListener('resize', function(){
+  if(collapsed) return;
+  var w = panel.offsetWidth, h = panel.offsetHeight;
+  var x = parseFloat(panel.style.left) || 0;
+  var y = parseFloat(panel.style.top)  || 0;
+  if(x + w > window.innerWidth)  panel.style.left = Math.max(0, window.innerWidth  - w) + 'px';
+  if(y + h > window.innerHeight) panel.style.top  = Math.max(0, window.innerHeight - h) + 'px';
+});
+
+/* =========================================================
+   11. Тема и годы
+   ========================================================= */
+function setTheme(t){
+  theme = t;
+  document.documentElement.dataset.theme = (t === 'dark') ? 'dark' : 'light';
+  themeBtn.textContent = (t === 'dark') ? '☀️' : '🌙';
+  LS.set('pc_theme', t);
+}
+
+themeBtn.addEventListener('click', function(){
+  setTheme(theme === 'dark' ? 'light' : 'dark');
+});
+
+function setYear(y){
+  currentYear = y;
+  LS.set('pc_year', y);
+  var btns = yearSeg.querySelectorAll('button');
+  for(var i=0;i<btns.length;i++){
+    btns[i].classList.toggle('on', Number(btns[i].dataset.year) === y);
+  }
+  render();
+}
+
+yearSeg.addEventListener('click', function(e){
+  var b = e.target.closest('button[data-year]');
+  if(!b) return;
+  setYear(Number(b.dataset.year));
+});
+
+/* =========================================================
+   12. Модальное окно «Инфо»
+   ========================================================= */
+var INFO = {
+  2025: {
+    hol:'1–8 января — Новогодние каникулы; 23 февраля — День защитника Отечества; 8 марта — Международный женский день; 1 мая — Праздник Весны и Труда; 9 мая — День Победы; 12 июня — День России; 4 ноября — День народного единства',
+    off:'2 мая, 8 мая, 13 июня, 3 ноября, 31 декабря (постановление Правительства РФ № 1335)',
+    wsat:'1 ноября (сокращённая)',
+    short:'30 апреля, 11 июня, 1 ноября, 30 декабря',
+    rest:'1–8 января; 23 февраля; 8–9 марта; 1–4 мая; 8–11 мая; 12–15 июня; 2–4 ноября; 31 декабря',
+    work:247, hours:1972
+  },
+  2026: {
+    hol:'1–8 января — Новогодние каникулы; 23 февраля — День защитника Отечества; 8 марта — Международный женский день; 1 мая — Праздник Весны и Труда; 9 мая — День Победы; 12 июня — День России; 4 ноября — День народного единства',
+    off:'9 января, 31 декабря (постановление Правительства РФ № 1466); автоматически по ТК РФ — 9 марта, 11 мая',
+    wsat:'нет',
+    short:'30 апреля, 8 мая, 11 июня, 3 ноября (20 февраля и 30 декабря — полные рабочие дни)',
+    rest:'31.12.2025–11.01.2026 (12 дней); 21–23 февраля; 7–9 марта; 1–3 мая; 9–11 мая; 12–14 июня; 4 ноября; 31 декабря',
+    work:247, hours:1972
+  },
+  2027: {
+    hol:'1–8 января — Новогодние каникулы; 23 февраля — День защитника Отечества; 8 марта — Международный женский день; 1 мая — Праздник Весны и Труда; 9 мая — День Победы; 12 июня — День России; 4 ноября — День народного единства',
+    off:'22 февраля, 5 ноября, 31 декабря (постановление Правительства РФ № 1187); автоматически по ТК РФ — 3 мая, 10 мая, 14 июня',
+    wsat:'20 февраля (сокращённая)',
+    short:'20 февраля, 30 апреля, 11 июня, 3 ноября (30 декабря — полный рабочий день)',
+    rest:'31.12.2026–10.01.2027 (11 дней); 21–23 февраля; 6–8 марта; 1–3 мая; 8–10 мая; 12–14 июня; 4–7 ноября; 31 декабря',
+    work:247, hours:1972
+  }
+};
+
+function buildModal(){
+  var h = '';
+  [2025,2026,2027].forEach(function(y){
+    var I = INFO[y];
+    h += '<h4>' + y + '</h4>'
+      +  '<p><span class="k">Праздничные дни:</span> ' + I.hol + '</p>'
+      +  '<p><span class="k">Переносы и дополнительные дни отдыха:</span> ' + I.off + '</p>'
+      +  '<p><span class="k">Рабочие субботы:</span> ' + I.wsat + '</p>'
+      +  '<p><span class="k">Сокращённые дни (−1 час):</span> ' + I.short + '</p>'
+      +  '<p><span class="k">Периоды отдыха:</span> ' + I.rest + '</p>'
+      +  '<p class="tot">Рабочих дней: ' + I.work + ' · Норма при 40-часовой неделе: ' + I.hours + ' ч</p>';
+  });
+  modalBody.innerHTML = h;
+}
+
+function openModal(){ buildModal(); modal.classList.add('on'); }
+function closeModalFn(){ modal.classList.remove('on'); }
+
+infoBtn.addEventListener('click', openModal);
+closeModal.addEventListener('click', closeModalFn);
+modal.addEventListener('click', function(e){ if(e.target === modal) closeModalFn(); });
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){ closeModalFn(); hideTip(); }
+});
+
+/* =========================================================
+   13. Инициализация
+   ========================================================= */
+(function init(){
+  // тема
+  var savedTheme = LS.get('pc_theme', null);
+  if(savedTheme === 'dark' || savedTheme === 'light'){
+    setTheme(savedTheme);
+  }else{
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(prefersDark ? 'dark' : 'light');
+  }
+
+  // период
+  var p = LS.get('pc_period', null);
+  if(p){
+    var s = p.s ? parseStr(p.s) : null;
+    var e = p.e ? parseStr(p.e) : null;
+    if(s && s.getTime() >= MIN.getTime() && s.getTime() <= MAX.getTime()) period.start = s;
+    if(e && e.getTime() >= MIN.getTime() && e.getTime() <= MAX.getTime()) period.end = e;
+    period.incStart = (p.a !== false);
+    period.incEnd   = (p.b !== false);
+  }
+
+  // год + отрисовка
+  setYear(currentYear);
+
+  // панель
+  var savedCollapsed = LS.get('pc_collapsed', null);
+  if(savedCollapsed === null){
+    setCollapsed(window.innerWidth < 600);
+  }else{
+    setCollapsed(!!savedCollapsed);
+  }
+  if(!collapsed) restorePanel();
+
+  // начальная синхронизация полей
+  refresh();
+})();
+
+})();
+</script>
+</body>
+</html>
